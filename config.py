@@ -1,2 +1,2 @@
-BD_NAME='inventario.db'
+DB_NAME = 'inventario.db'
 TABLE_NAME='productos'

@@ -1,38 +1,40 @@
-from utils.helpers import *
+from utils.helpers import ( imprimir_titulo, imprimir_exito, imprimir_error,
+    validar_input_string, validar_input_float, validar_input_int
+)
 from utils import db_manager
 import sys
 
 def mostrar_tabla(productos):
     if not productos:
-        print("no se encontraron productos.")
+        print("No se encontraron productos.")
         return
 
     print(f"{'ID':<5} {'NOMBRE':<20} {'CATEGORIA':<15} {'PRECIO':<10} {'CANTIDAD':<10}")
     print("-" * 65)
     for prod in productos:
-         print(f"{prod[0]:<5} {prod[1][:18]:<20} {prod[5][:13]:<15} ${prod[4]:<9.2f} {prod[3]:<10}")
+        print(f"{prod[0]:<5} {prod[1][:18]:<20} {prod[5][:13]:<15} ${prod[4]:<9.2f} {prod[3]:<10}")
     print("-" * 65)
 
 def menu_registrar():
-    imprimir_titulo("Registrar nuevo producto")
-    nombre = validar_input_string("Ingresa el nombre del producto: ")
-    desc = input("Ingresa la descripcion (opcional):").strip()
-    categ = validar_input_string("ingresa la categoria: ")
-    cantidad = validar_input_int("cantidad inicial: " )
-    precio = validar_input_float("Precio unitario: ")
+    imprimir_titulo("Registrar Nuevo Producto")
+    nombre = validar_input_string("Nombre")
+    desc = input("Descripción (opcional): ").strip()
+    categ = validar_input_string("Categoría")
+    cantidad = validar_input_int("Cantidad inicial")
+    precio = validar_input_float("Precio unitario")
     
-    if db_manager.registrar_producto(nombre,desc,categ,cantidad,precio):
+    if db_manager.registrar_producto(nombre, desc, cantidad, precio, categ):
         imprimir_exito("Producto registrado correctamente.")
 
 def menu_mostrar():
-    imprimir_titulo("Listado de productos")
+    imprimir_titulo("Listado de Productos")
     productos = db_manager.obtener_productos()
     mostrar_tabla(productos)
-    
+
 def menu_actualizar():
-    imprimir_titulo("Actualizar producto")
+    imprimir_titulo("Actualizar Producto")
     menu_mostrar()
-    id_prod = validar_input_int("Ingrese el Id del producto que quiera modificar: ")
+    id_prod = validar_input_int("Ingrese el ID del producto a modificar")
     
     producto_actual = db_manager.buscar_producto_id(id_prod)
     if not producto_actual:
@@ -40,31 +42,29 @@ def menu_actualizar():
         return
 
     print(f"Editando: {producto_actual[1]}")
-    print("Deja vacio el campo que no quiere modificar")
+    print("Deje vacío si no desea modificar el campo.")
     
     nuevo_nombre = input(f"Nombre [{producto_actual[1]}]: ").strip() or producto_actual[1]
-    nuevo_desc = input(f"Descripcion [{producto_actual[2]}]: ").strip() or producto_actual[2]
-    nuevo_cat = input(f"Categoria [{producto_actual[5]}]: ").strip() or producto_actual[5]
+    nueva_desc = input(f"Descripción [{producto_actual[2]}]: ").strip() or producto_actual[2]
+    nueva_cat = input(f"Categoría [{producto_actual[5]}]: ").strip() or producto_actual[5]
     
     cant_str = input(f"Cantidad [{producto_actual[3]}]: ").strip()
-    nueva_cant = int(cant_str) if cant_str.isdigit() else producto_actual[3]
+    nuevo_cant = int(cant_str) if cant_str.isdigit() else producto_actual[3]
     
     precio_str = input(f"Precio [{producto_actual[4]}]: ").strip()
     nuevo_precio = float(precio_str) if precio_str else producto_actual[4]
-    
-    if db_manager.actualizar_producto(id_prod,nuevo_nombre,nuevo_desc,nueva_cant,nuevo_precio,nuevo_cat):
+
+    if db_manager.actualizar_producto(id_prod, nuevo_nombre, nueva_desc, nuevo_cant, nuevo_precio, nueva_cat):
         imprimir_exito("Producto actualizado.")
     else:
-        imprimir_error("no se pudo acutalizar.")
-
+        imprimir_error("No se pudo actualizar.")
 
 def menu_eliminar():
     imprimir_titulo("Eliminar Producto")
-    menu_mostrar() # Mostramos primero para que sepa qué ID elegir
+    menu_mostrar()
 
     id_prod = validar_input_int("ID del producto a eliminar")
     
-    # Confirmación
     confirm = input(f"¿Seguro que desea eliminar el ID {id_prod}? (s/n): ").lower()
     if confirm == 's':
         if db_manager.eliminar_producto(id_prod):
@@ -103,11 +103,9 @@ def menu_reporte():
         imprimir_exito("Todos los productos superan ese límite de stock.")
 
 def main():
-    # Asegurar que la BD existe
     db_manager.inicializar_db()
     
     while True:
-        #limpiar_pantalla() # Descomentar si quieres que se limpie en cada ciclo
         print("\n" + "="*30)
         print("   GESTIÓN DE INVENTARIO")
         print("="*30)
@@ -141,4 +139,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
