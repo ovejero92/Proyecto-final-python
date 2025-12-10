@@ -20,6 +20,16 @@ def inicializar_db():
             )
             '''
             cursor.execute(sql)
+            cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS ventas (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            id_producto INTEGER,
+                            cantidad_vendida INTEGER,
+                            total REAL,
+                            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY(id_producto) REFERENCES productos(id)
+                        )
+                    ''')
             conn.commit()
     except sqlite3.Error as e:
         imprimir_error(f"Error al inicializar la BD: {e}")
@@ -104,4 +114,56 @@ def reporte_bajo_stock(limite):
             return cursor.fetchall()
     except sqlite3.Error as e:
         imprimir_error(f"Error en reporte: {e}")
+        return []
+
+def realizar_venta_transaccional(id_prod, cantidad_vender):
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+        
+        cursor.execute(f"SELECT precio, cantidad FROM {TABLE_NAME} WHERE id = ?", (id_prod,))
+        producto = cursor.fetchone()
+        
+        if not producto:
+            print("❌ Producto no existe.")
+            return False
+            
+        precio, stock_actual = producto
+        
+        if stock_actual < cantidad_vender:
+            print(f"❌ Stock insuficiente. Solo quedan {stock_actual}.")
+            return False
+
+        try:
+            nuevo_stock = stock_actual - cantidad_vender
+            cursor.execute(f"UPDATE {TABLE_NAME} SET cantidad = ? WHERE id = ?", (nuevo_stock, id_prod))
+            
+            total = precio * cantidad_vender
+            cursor.execute("INSERT INTO ventas (id_producto, cantidad_vendida, total) VALUES (?, ?, ?)", 
+                           (id_prod, cantidad_vender, total))
+            conn.commit()
+            return True
+            
+        except Exception as e:
+            conn.rollback()
+            imprimir_error(f"Transacción fallida. Se hizo ROLLBACK: {e}")
+            return False
+    finally:
+        conn.close()
+        
+
+def obtener_historial_ventas():
+    try:
+        with conectar_db() as conn:
+            cursor = conn.cursor()
+            sql = '''
+                SELECT v.id, p.nombre, v.cantidad_vendida, v.total, v.fecha 
+                FROM ventas v
+                JOIN productos p ON v.id_producto = p.id
+                ORDER BY v.fecha DESC
+            '''
+            cursor.execute(sql)
+            return cursor.fetchall()
+    except sqlite3.Error as e:
+        imprimir_error(f"Error al obtener ventas: {e}")
         return []

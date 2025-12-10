@@ -42,7 +42,7 @@ def menu_actualizar():
         return
 
     print(f"Editando: {producto_actual[1]}")
-    print("Deje vacío si no desea modificar el campo.")
+    print("Deje vacío si no desea modificar el campo. ")
     
     nuevo_nombre = input(f"Nombre [{producto_actual[1]}]: ").strip() or producto_actual[1]
     nueva_desc = input(f"Descripción [{producto_actual[2]}]: ").strip() or producto_actual[2]
@@ -101,10 +101,37 @@ def menu_reporte():
         mostrar_tabla(res)
     else:
         imprimir_exito("Todos los productos superan ese límite de stock.")
+        
+def menu_venta():
+    imprimir_titulo("Registrar Venta")
+    menu_mostrar() 
+    id_prod = validar_input_int("ID del Producto a vender")
+    cantidad = validar_input_int("Cantidad a vender")
+    
+    if db_manager.realizar_venta_transaccional(id_prod, cantidad):
+        imprimir_exito("Venta registrada y stock actualizado correctamente.")
+    else:
+        imprimir_error("No se pudo procesar la venta.")
+        
+def mostrar_tabla_ventas(ventas):
+    if not ventas:
+        print("No hay ventas registradas.")
+        return
+    
+    print(f"{'ID':<4} {'PRODUCTO':<20} {'CANT':<6} {'TOTAL':<10} {'FECHA':<20}")
+    print("-" * 65)
+    for v in ventas:
+        print(f"{v[0]:<4} {v[1][:18]:<20} {v[2]:<6} ${v[3]:<9.2f} {v[4]}")
+    print("-" * 65)
+
+def menu_historial_ventas():
+    imprimir_titulo("Historial de Ventas")
+    ventas = db_manager.obtener_historial_ventas()
+    mostrar_tabla_ventas(ventas)
+
 
 def main():
     db_manager.inicializar_db()
-    
     while True:
         print("\n" + "="*30)
         print("   GESTIÓN DE INVENTARIO")
@@ -115,7 +142,9 @@ def main():
         print("4. Eliminar Producto")
         print("5. Buscar Producto")
         print("6. Reporte Bajo Stock")
-        print("7. Salir")
+        print("7. Registrar Venta")
+        print("8. Ver Historial de Ventas")
+        print("9. Salir")
         
         opcion = input("\nSeleccione una opción: ")
         
@@ -132,6 +161,10 @@ def main():
         elif opcion == '6':
             menu_reporte()
         elif opcion == '7':
+            menu_venta()
+        elif opcion == '8':
+            menu_historial_ventas()
+        elif opcion == '9':
             print("Saliendo del sistema...")
             sys.exit()
         else:
@@ -139,3 +172,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
